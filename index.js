@@ -64,7 +64,7 @@ const run = async () => {
           } else {
             console.log(`Unique ID ${vehicle} does not exist in Redis.`);
   
-            if ((eventFlag & 1024) === 1024) {
+            if ((eventFlag & 134217728) === 134217728) {
               await writeToRedisWithKeyValue(redisKey, "harsh_braking_start");
               console.log(`Stored IMEI ${vehicle} with value 'harsh_braking_start' in Redis.`);
   
