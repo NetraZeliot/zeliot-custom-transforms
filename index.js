@@ -54,7 +54,7 @@ const run = async () => {
             } else {
               let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_off" });
               await producer.send({
-                topic: "output",
+                topic: process.env.KAFKA_PRODUCER_TOPIC,
                 messages: [{ value: messageToPublish }],
               });
   
@@ -70,7 +70,7 @@ const run = async () => {
   
               let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_on" });
               await producer.send({
-                topic: "output",
+                topic: process.env.KAFKA_PRODUCER_TOPIC,
                 messages: [{ value: messageToPublish }],
               });
             } else if ((eventFlag & 4096) === 4096) {
