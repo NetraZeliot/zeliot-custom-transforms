@@ -37,48 +37,44 @@ const run = async () => {
         console.log("THis is input...",input)
         let vehicle = input.uniqueId;
         console.log(`Vehicle Unique ID = ${vehicle}`);
+
+        let message_type = input.messageType;
+        console.log(`Vehicle Message Type = ${message_type}`);
+
+        if (message_type.toLowerCase() === "obd") {
+          if (input.hasOwnProperty("com_all_dtcs_str")) {
+              let comAllDtcStr = input.com_all_dtcs_str;
+              let dtcArray = comAllDtcStr.split(",").map(dtc => dtc.trim());
+              let redisKey = `imei_${vehicle}_dtc`;
   
-        let eventFlag = input.event_flag;
+              let storedDtcList = await redisClient.lrange(redisKey, 0, -1);
   
-        let redisKey = `imei_${vehicle}`;
-  
-          // console.log(`Processing message for Unique ID: ${uniqueId}`);
-  
-          let redisValue = await getKeyValueSentinel(redisKey);
-  
-          if (redisValue) {
-            console.log(`Unique ID ${vehicle} exists in Redis with value: ${redisValue}`);
-  
-            if (redisValue === "ignition_on") {
-              console.log(`Key '${redisKey}' has value 'ignition_on'. No action needed.`);
-            } else {
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_off" });
-              await producer.send({
-                topic: "output",
-                messages: [{ value: messageToPublish }],
-              });
-  
-              await deleteFromRedis(redisKey);
-              console.log(`Removed key '${redisKey}' from Redis.`);
-            }
+              for (let dtc of dtcArray) {
+                  if (!storedDtcList.includes(dtc)) {
+                      await redisClient.lpush(redisKey, dtc);
+                      console.log(`Saved DTC [${dtc}] to Redis under key [${redisKey}]`);
+                      let messageToPublish = JSON.stringify({ DTC: dtc, status: "dtc_alert_start" });
+                      await producer.send({
+                          topic: process.env.KAFKA_PRODUCER_TOPIC,
+                          messages: [{ value: messageToPublish }],
+                      });
+                      console.log("Published DTC alert:", messageToPublish);
+                  } else {
+                      await redisClient.lrem(redisKey, 0, dtc);
+                      let messageToPublish = JSON.stringify({ DTC: dtc, status: "dtc_alert_stop" });
+                      await producer.send({
+                          topic: process.env.KAFKA_PRODUCER_TOPIC,
+                          messages: [{ value: messageToPublish }],
+                      });
+                      console.log("Published DTC alert:", messageToPublish);
+                  }
+              }
           } else {
-            console.log(`Unique ID ${vehicle} does not exist in Redis.`);
-  
-            if ((eventFlag & 1024) === 1024) {
-              await writeToRedisWithKeyValue(redisKey, "ignition_on");
-              console.log(`Stored IMEI ${vehicle} with value 'ignition_on' in Redis.`);
-  
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_on" });
-              await producer.send({
-                topic: "output",
-                messages: [{ value: messageToPublish }],
-              });
-            } else if ((eventFlag & 4096) === 4096) {
-              console.log(`Key '${redisKey}' has value 'ignition_off'. No action needed.`);
-            } else {
-              console.log(`Unexpected event_flag value: ${eventFlag} for unique ID ${vehicle}`);
-            }
+              console.warn(`com_all_dtcs_str field is missing for Unique ID ${vehicle}`);
           }
+      }
+
+      
       }catch(err){
         console.log("THis is the err--->",err)
       }
