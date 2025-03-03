@@ -49,12 +49,12 @@ const run = async () => {
           if (redisValue) {
             console.log(`Unique ID ${vehicle} exists in Redis with value: ${redisValue}`);
   
-            if (redisValue === "ignition_on") {
-              console.log(`Key '${redisKey}' has value 'ignition_on'. No action needed.`);
+            if (redisValue === "harsh_braking_start") {
+              console.log(`Key '${redisKey}' has value 'harsh_braking_start'. No action needed.`);
             } else {
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_off" });
+              let messageToPublish = JSON.stringify({ imei: vehicle, status: "harsh_braking_stop" });
               await producer.send({
-                topic: "output",
+                topic: process.env.KAFKA_PRODUCER_TOPIC,
                 messages: [{ value: messageToPublish }],
               });
   
@@ -65,17 +65,15 @@ const run = async () => {
             console.log(`Unique ID ${vehicle} does not exist in Redis.`);
   
             if ((eventFlag & 1024) === 1024) {
-              await writeToRedisWithKeyValue(redisKey, "ignition_on");
-              console.log(`Stored IMEI ${vehicle} with value 'ignition_on' in Redis.`);
+              await writeToRedisWithKeyValue(redisKey, "harsh_braking_start");
+              console.log(`Stored IMEI ${vehicle} with value 'harsh_braking_start' in Redis.`);
   
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_on" });
+              let messageToPublish = JSON.stringify({ imei: vehicle, status: "harsh_braking_start" });
               await producer.send({
-                topic: "output",
+                topic: process.env.KAFKA_PRODUCER_TOPIC,
                 messages: [{ value: messageToPublish }],
               });
-            } else if ((eventFlag & 4096) === 4096) {
-              console.log(`Key '${redisKey}' has value 'ignition_off'. No action needed.`);
-            } else {
+            }  else {
               console.log(`Unexpected event_flag value: ${eventFlag} for unique ID ${vehicle}`);
             }
           }
