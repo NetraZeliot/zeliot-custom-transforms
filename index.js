@@ -8,11 +8,11 @@ const { getKeyValueSentinel, writeToRedisWithKeyValue, deleteFromRedis } = requi
 const kafka = new Kafka({
   clientId: "alert-pipeline-" + Date.now(), // Append Current Epoch milliseconds for Random Id
   brokers: [process.env.KAFKA_BOOTSTRAP_SERVER_URL],
-  // sasl: {
-  //   mechanism: "scram-sha-512",
-  //   username: process.env.KAFKA_USERNAME,
-  //   password: process.env.KAFKA_PASSWORD,
-  // },
+  sasl: {
+    mechanism: "scram-sha-512",
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
+  },
 });
 
 const consumer = kafka.consumer({
