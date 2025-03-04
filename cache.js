@@ -5,8 +5,8 @@ let REDIS_MASTER_OPTIONS = {
   /* Redis Client Syntax to connect to Redis Sentinel Cluster */
   sentinels: [
     {
-      host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
+      host: process.env.REDIS_SENTINEL_SERVICE_DNS || "rfs-redisfailover.redis",
+      port: 26379,
     },
     // { host: "rfs-redisfailover.redis", port: 26379 }
   ],
@@ -34,36 +34,17 @@ const redisReader = new Redis(REDIS_SLAVE_OPTIONS);
 const redisWriter = new Redis(REDIS_MASTER_OPTIONS);
 
 async function getKeyValueSentinel(key) {
-  try {
-    const value = await redisReader.get(key);
-    console.log(`GET ${key} -> ${value}`);
-    return value;
-  } catch (error) {
-    console.error(`Redis GET error for key ${key}:`, error);
-    return null;
-  }
+  // add transaction here
+  const values = await redisReader.mget(key);
+  if (values && values.length) {
+    return values[0];
+  } else return null;
 }
 
 async function writeToRedisWithKeyValue(key, value) {
-  try {
-    await redisWriter.set(key, value);
-    console.log(`SET ${key} -> ${value}`);
-    return true;
-  } catch (error) {
-    console.error(`Redis SET error for key ${key}:`, error);
-    return false;
-  }
-}
-
-async function deleteFromRedis(key) {
-  try {
-    const result = await redisWriter.del(key);
-    console.log(`DEL ${key} -> ${result ? "Success" : "Key not found"}`);
-    return result;
-  } catch (error) {
-    console.error(`Redis DEL error for key ${key}:`, error);
-    return false;
-  }
+  // Sample for writing to reddis
+  let writeResponse = await redisWriter.set(key, value);
+  return writeResponse;
 }
 
 redisReader.on("error", (error) => {
@@ -79,5 +60,4 @@ redisWriter.on("error", (error) => {
 module.exports = {
   getKeyValueSentinel,
   writeToRedisWithKeyValue,
-  deleteFromRedis,
 };
