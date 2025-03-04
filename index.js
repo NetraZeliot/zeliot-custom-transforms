@@ -60,18 +60,18 @@ const run = async () => {
                         } else {
                             await writeToRedisWithKeyValue(redisKey, String(comSoc));
                             let messageToPublish = JSON.stringify({ imei: vehicle, status: "soc_alert" });
-                            await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                            await producer.send({ topic: process.env.KAFKA_PRODUCER_TOPIC, messages: [{ value: messageToPublish }] });
                         }
                     } else {
                         console.log(`SOC value for Unique ID ${vehicle} is within normal range: ${comSoc}`);
                         await writeToRedisWithKeyValue(redisKey, String(comSoc));
                         let messageToPublish = JSON.stringify({ imei: vehicle, status: "no_alert" });
-                        await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                        await producer.send({ topic: process.env.KAFKA_PRODUCER_TOPIC, messages: [{ value: messageToPublish }] });
                     }
                 } else {
                     await writeToRedisWithKeyValue(redisKey, String(comSoc));
                     let messageToPublish = JSON.stringify({ imei: vehicle, status: "soc_alert" });
-                    await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                    await producer.send({ topic: process.env.KAFKA_PRODUCER_TOPIC, messages: [{ value: messageToPublish }] });
                 }
             } else {
                 console.warn(`com_soc field is missing for Unique ID ${vehicle}`);
