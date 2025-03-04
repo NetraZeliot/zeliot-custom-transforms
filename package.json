@@ -18,9 +18,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-      "bluebird": "^3.7.2",
       "dotenv": "^16.4.5",
-      "ioredis": "^5.4.1",
       "kafkajs": "^2.2.4"
     }
   }

@@ -1,7 +1,6 @@
 const dotenv = require("dotenv");
 dotenv.config();
 const { Kafka } = require("kafkajs");
-Redis.Promise = require("bluebird");
 
 const kafka = new Kafka({
   clientId: "alert-pipeline-" + Date.now(), // Append Current Epoch milliseconds for Random Id
