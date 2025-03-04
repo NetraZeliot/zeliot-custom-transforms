@@ -3,16 +3,16 @@ dotenv.config();
 const { Kafka } = require("kafkajs");
 const Redis = require("ioredis");
 Redis.Promise = require("bluebird");
-const { getKeyValueSentinel, writeToRedisWithKeyValue } = require("./cache.js");
+const { getKeyValueSentinel, writeToRedisWithKeyValue, deleteFromRedis } = require("./cache.js");
 
 const kafka = new Kafka({
   clientId: "alert-pipeline-" + Date.now(), // Append Current Epoch milliseconds for Random Id
   brokers: [process.env.KAFKA_BOOTSTRAP_SERVER_URL],
-  sasl: {
-    mechanism: "scram-sha-512",
-    username: process.env.KAFKA_USERNAME,
-    password: process.env.KAFKA_PASSWORD,
-  },
+  // sasl: {
+  //   mechanism: "scram-sha-512",
+  //   username: process.env.KAFKA_USERNAME,
+  //   password: process.env.KAFKA_PASSWORD,
+  // },
 });
 
 const consumer = kafka.consumer({
