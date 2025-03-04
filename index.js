@@ -41,7 +41,7 @@ const run = async () => {
         let message_type = input.messageType;
         console.log(`Vehicle Message Type = ${message_type}`);
 
-        if (message_type.toLowerCase() === "obd") {
+        if (message_type === "obd") {
           if (input.hasOwnProperty("com_all_dtcs_str")) {
               let comAllDtcStr = input.com_all_dtcs_str;
               let dtcArray = comAllDtcStr.split(",").map(dtc => dtc.trim());
