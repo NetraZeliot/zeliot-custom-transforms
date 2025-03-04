@@ -31,58 +31,57 @@ const run = async () => {
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      try{
-        console.log("This is message",message.value.toString())
+
+      try {
+        console.log("This is message", message.value.toString());
         let input = JSON.parse(message.value.toString());
-        console.log("THis is input...",input)
+        console.log("This is input...", input);
+        
         let vehicle = input.uniqueId;
         console.log(`Vehicle Unique ID = ${vehicle}`);
-  
-        let eventFlag = input.event_flag;
-  
-        let redisKey = `imei_${vehicle}`;
-  
-          // console.log(`Processing message for Unique ID: ${uniqueId}`);
-  
-          let redisValue = await getKeyValueSentinel(redisKey);
-  
-          if (redisValue) {
-            console.log(`Unique ID ${vehicle} exists in Redis with value: ${redisValue}`);
-  
-            if (redisValue === "ignition_on") {
-              console.log(`Key '${redisKey}' has value 'ignition_on'. No action needed.`);
+    
+        let messageType = input.message_type;
+        console.log(`Vehicle Unique ID = ${messageType}`);
+        
+        if (messageType === "obd") {
+            if (input.hasOwnProperty("com_soc")) {
+                let comSoc = parseFloat(input.com_soc);
+                let redisKey = vehicle;
+    
+                let redisValue = await getKeyValueSentinel(redisKey);
+                
+                if (redisValue) {
+                    if (comSoc < 20 || comSoc > 90) {
+                        let existingComSoc = parseFloat(redisValue);
+                        if (existingComSoc === comSoc) {
+                            await writeToRedisWithKeyValue(redisKey, String(comSoc));
+                            let messageToPublish = JSON.stringify({ imei: vehicle, status: "no_alert" });
+                            await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                        } else {
+                            await writeToRedisWithKeyValue(redisKey, String(comSoc));
+                            let messageToPublish = JSON.stringify({ imei: vehicle, status: "soc_alert" });
+                            await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                        }
+                    } else {
+                        console.log(`SOC value for Unique ID ${vehicle} is within normal range: ${comSoc}`);
+                        await writeToRedisWithKeyValue(redisKey, String(comSoc));
+                        let messageToPublish = JSON.stringify({ imei: vehicle, status: "no_alert" });
+                        await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                    }
+                } else {
+                    await writeToRedisWithKeyValue(redisKey, String(comSoc));
+                    let messageToPublish = JSON.stringify({ imei: vehicle, status: "soc_alert" });
+                    await producer.send({ topic: "output", messages: [{ value: messageToPublish }] });
+                }
             } else {
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_off" });
-              await producer.send({
-                topic: "output",
-                messages: [{ value: messageToPublish }],
-              });
-  
-              await deleteFromRedis(redisKey);
-              console.log(`Removed key '${redisKey}' from Redis.`);
+                console.warn(`com_soc field is missing for Unique ID ${vehicle}`);
             }
-          } else {
-            console.log(`Unique ID ${vehicle} does not exist in Redis.`);
-  
-            if ((eventFlag & 1024) === 1024) {
-              await writeToRedisWithKeyValue(redisKey, "ignition_on");
-              console.log(`Stored IMEI ${vehicle} with value 'ignition_on' in Redis.`);
-  
-              let messageToPublish = JSON.stringify({ imei: vehicle, status: "ignition_on" });
-              await producer.send({
-                topic: "output",
-                messages: [{ value: messageToPublish }],
-              });
-            } else if ((eventFlag & 4096) === 4096) {
-              console.log(`Key '${redisKey}' has value 'ignition_off'. No action needed.`);
-            } else {
-              console.log(`Unexpected event_flag value: ${eventFlag} for unique ID ${vehicle}`);
-            }
-          }
-      }catch(err){
-        console.log("THis is the err--->",err)
-      }
-     
+        } else {
+            console.warn(`Unexpected message_type value: ${messageType} for unique ID ${vehicle}`);
+        }
+    } catch (err) {
+        console.log("This is the error --->", err);
+    }   
     },
   });
 };
