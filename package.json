@@ -4,24 +4,22 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
-      "type": "git",
-      "url": "git+https://oauth2:be10863a071967a4d875199d27752636bd74fec86975a8b6249d97c48d55e590@gitlab.com/sugam72/alert-pipeline.git"
+        "type": "git",
+        "url": "git+https://oauth2:be10863a071967a4d875199d27752636bd74fec86975a8b6249d97c48d55e590@gitlab.com/sugam72/alert-pipeline.git"
     },
     "bugs": {
-      "url": "https://gitlab.com/sugam72/alert-pipeline/issues"
+        "url": "https://gitlab.com/sugam72/alert-pipeline/issues"
     },
     "homepage": "https://gitlab.com/sugam72/alert-pipeline#readme",
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
-      "bluebird": "^3.7.2",
-      "dotenv": "^16.4.5",
-      "ioredis": "^5.4.1",
-      "kafkajs": "^2.2.4"
+        "axios": "^1.8.1",
+        "dotenv": "^16.4.7",
+        "kafkajs": "^2.2.4"
     }
-  }
-  
+}
