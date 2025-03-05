@@ -6,11 +6,11 @@ const axios = require("axios");
 const kafka = new Kafka({
   clientId: "alert-pipeline-" + Date.now(),
   brokers: [process.env.KAFKA_BOOTSTRAP_SERVER_URL],
-  // sasl: {
-  //   mechanism: "scram-sha-512",
-  //   username: process.env.KAFKA_USERNAME,
-  //   password: process.env.KAFKA_PASSWORD,
-  // },
+  sasl: {
+    mechanism: "scram-sha-512",
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
+  },
 });
 
 const consumer = kafka.consumer({
